@@ -15,10 +15,10 @@ sys.path.append(os.path.join(app_home, "models"))
 sys.path.append(os.path.join(app_home, "setting"))
 
 # モジュール、設定系の読み込み
-from coincheck_ema_trade_history import CoincheckEmaTradeHistory
+from liquid_ema_trade_history import LiquidEmaTradeHistory
 from db_setting import session
 from logger import logger
-from coincheck_ccxt import coincheck
+from liquid_ccxt import liquid
 
 if __name__ == "__main__" :
 
@@ -26,12 +26,12 @@ if __name__ == "__main__" :
     
     try:
         #statusがcloseのレコードを取得する
-        close_positions = CoincheckEmaTradeHistory.get_record_filter_status(session, "close")
+        close_positions = LiquidEmaTradeHistory.get_record_filter_status(session, "close")
 
         if close_positions is not None:
         
-            # 直近の取引履歴25件をcoincheckから取得する
-            my_trades = coincheck.get_my_trades()
+            # 直近の取引履歴をliquidから取得する
+            my_trades = liquid.get_my_trades()
             
             # 1件ずつ、order_idをキーに突合し、抜けているデータを保存する
             for trade_history in close_positions:

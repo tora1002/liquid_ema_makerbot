@@ -11,12 +11,12 @@ app_home = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__
 sys.path.append(os.path.join(app_home, "setting"))
 from db_setting import ENGINE, Base
 
-class BitflyerTicker(Base):
+class LiquidTicker(Base):
     
     """
-    BitflyerTickerModel
+    LiquidTickerModel
     """
-    __tablename__ = "bitflyer_ticker"
+    __tablename__ = "Liquid_ticker"
  
     id = Column(BIGINT, primary_key = True, nullable = True)
     request_nonce = Column(BIGINT, nullable = True)
@@ -33,7 +33,7 @@ class BitflyerTicker(Base):
         sharping_time = ticker_info["timestamp"].split(".")[0].replace("T", " ")
         print(sharping_time)
         session.add(
-            BitflyerTicker(
+            LiquidTicker(
                 request_nonce = request_nonce,
                 bid = ticker_info["best_bid"],
                 ask = ticker_info["best_ask"],

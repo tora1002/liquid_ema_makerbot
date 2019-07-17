@@ -14,15 +14,15 @@ sys.path.append(os.path.join(app_home, "models"))
 sys.path.append(os.path.join(app_home, "setting"))
 
 # モジュール、設定系の読み込み
-from bitflyer_6tema_16dema import Bitflyer6tema16dema
-from bitflyer_ema_trade_history import BitflyerEmaTradeHistory
+from liquid_6tema_16dema import Liquid6tema16dema
+from liquid_ema_trade_history import LiquidEmaTradeHistory
 from db_setting import session
 from logger import logger
-from bitflyer_ccxt import bitflyer
+from liquid_ccxt import liquid
 
 def get_signal(session):
     signal = {}
-    index_desc = Bitflyer6tema16dema.get_limit_record_order_desc(session, 1)
+    index_desc = Liquid6tema16dema.get_limit_record_order_desc(session, 1)
         
     for index in index_desc:
         signal["gcross"] = index.gcross
@@ -31,7 +31,7 @@ def get_signal(session):
     return signal
 
 def get_position(session, position_status):
-    position = BitflyerEmaTradeHistory.get_record_filter_status(session, position_status)
+    position = LiquidEmaTradeHistory.get_record_filter_status(session, position_status)
 
     ### ポジションが1つ以上存在する
     if len(position) > 1:
@@ -39,33 +39,33 @@ def get_position(session, position_status):
 
     return position
 
-def get_tciker_info(bitflyer):
-    ticker = bitflyer.fetch_ticker("BTC/JPY")
+def get_tciker_info(liquid):
+    ticker = liquid.fetch_ticker("BTC/JPY")
     return ticker["info"]
 
-def create_order(bitflyer, side, amount, price):
-    res = bitflyer.create_order(symbol = "BTC/JPY", type = "limit", side = side, amount = amount, price = price)
+def create_order(liquid, side, amount, price):
+    res = liquid.create_order(symbol = "FX_BTC_JPY", type = "limit", side = side, amount = amount, price = price)
     
     if res["id"] is None:
         raise Exception("Can not order")
 
     return res
 
-def get_open_orders(bitflyer):
-    open_orders = bitflyer.fetch_open_orders()
+def get_open_orders(liquid):
+    open_orders = liquid.fetch_open_orders()
 
     if len(open_orders) > 1:
         raise Exception("Hold multiple position")
 
     return open_orders
 
-def cancel_order(bitflyer, order_id):
-    bitflyer.cancel_order(order_id)
+def cancel_order(liquid, order_id):
+    liquid.cancel_order(order_id)
     #TODO cancel エラーになった場合はどするか？
 
 def insert_trade_history(session, request_nonce, amount, order_id):
     session.add(
-        BitflyerEmaTradeHistory(
+        LiquidEmaTradeHistory(
             order_request_nonce = request_nonce,
             amount = amount,
             status = "request",
@@ -117,12 +117,12 @@ if __name__ == "__main__" :
             logger.info("Gcross & buy order")
             
             # bidの値を取得
-            ticker_info = get_tciker_info(bitflyer)
+            ticker_info = get_tciker_info(liquid)
             ticker_bid = ticker_info["bid"]
 
             # 注文
             request_nonce = datetime.now().strftime("%Y%m%d%H%M%S")
-            res = create_order(bitflyer, side = "buy", amount = trade_amount, price = ticker_bid)
+            res = create_order(liquid, side = "buy", amount = trade_amount, price = ticker_bid)
 
             order_id = res["id"]
             insert_trade_history(session, request_nonce, trade_amount, order_id)
@@ -130,7 +130,7 @@ if __name__ == "__main__" :
             sleep(1)
 
             # 未決済のポジションを全て取得 
-            open_orders = get_open_orders(bitflyer)
+            open_orders = get_open_orders(liquid)
             trade_history_list = get_position(session, "request")
 
             for obj in trade_history_list:
@@ -138,7 +138,7 @@ if __name__ == "__main__" :
 
             # takeされなかったのでキャンセル & data更新
             if len(open_orders) == 1:
-                cancel_order(bitflyer, order_id)
+                cancel_order(liquid, order_id)
                 update_status(session, trade_history, "not_position") 
                 logger.info("Not Position")
             
@@ -161,20 +161,20 @@ if __name__ == "__main__" :
             
             while(order_flg):
                 # askの値を取得
-                ticker_info = get_tciker_info(bitflyer)
+                ticker_info = get_tciker_info(liquid)
                 ticker_ask = ticker_info["ask"]
 
-                res = create_order(bitflyer, side = "sell", amount = trade_amount, price = ticker_ask)
+                res = create_order(liquid, side = "sell", amount = trade_amount, price = ticker_ask)
                 order_id = res["id"]
 
                 sleep(1)
 
                 # 未決済のポジションを全て取得
-                open_orders = get_open_orders(bitflyer)
+                open_orders = get_open_orders(liquid)
 
                 # takeされなかったのでキャンセル
                 if len(open_orders) == 1:
-                    cancel_order(bitflyer, order_id)
+                    cancel_order(liquid, order_id)
                     logger.info("Can not sell order")
                 
                 # takeされた場合
