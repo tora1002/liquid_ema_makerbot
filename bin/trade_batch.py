@@ -41,10 +41,10 @@ def get_position(session, position_status):
 
 def get_tciker_info(liquid):
     ticker = liquid.fetch_ticker("BTC/JPY")
-    return ticker["info"]
+    return ticker
 
 def create_order(liquid, side, amount, price):
-    res = liquid.create_order(symbol = "FX_BTC_JPY", type = "limit", side = side, amount = amount, price = price)
+    res = liquid.create_order(symbol = "BTC/JPY", type = "limit", side = side, amount = amount, price = price)
     
     if res["id"] is None:
         raise Exception("Can not order")

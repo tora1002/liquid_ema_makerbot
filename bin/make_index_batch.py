@@ -25,7 +25,7 @@ from liquid_ccxt import liquid
 
 def get_tciker_info(liquid):
     ticker = liquid.fetch_ticker("BTC/JPY")
-    return ticker["info"]
+    return ticker
 
 
 if __name__ == "__main__" :
@@ -37,7 +37,7 @@ if __name__ == "__main__" :
 
         ### tickerを取得 & index価格を作成
         ticker_info = get_tciker_info(liquid)
-        index_price = (ticker_info["best_ask"] +ticker_info["best_bid"])/2
+        index_price = (ticker_info["ask"] +ticker_info["bid"])/2
 
         ### tickerデータを保存
         LiquidTicker.insert(session, request_nonce, ticker_info, index_price)
@@ -81,7 +81,7 @@ if __name__ == "__main__" :
         dcross = bool((short_ema < long_ema) & (prev_short_ema > prev_long_ema))
 
         ### emaデータを取得
-        Liquid6tema16dema.insert(session, ticker_info["timestamp"], index_price, short_ema, long_ema, gcross, dcross)
+        Liquid6tema16dema.insert(session, ticker_info["datetime"], index_price, short_ema, long_ema, gcross, dcross)
         
         logger.info("=== make_index_batch finish ===")
 

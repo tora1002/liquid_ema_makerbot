@@ -32,10 +32,10 @@ class Liquid6tema16dema(Base):
 
     ##### insert
     def insert(session, ticker_timestamp, index_price, short_ema, long_ema, gcross, dcross):
-        sharping_time = ticker_timestamp.split(".")[0].replace("T", "").replace("-", "").replace(":", "")
+        sharping_time = ticker_timestamp.split(".")[0].replace("T", " ")
         session.add(
             Liquid6tema16dema(
-                server_nonce = int(sharping_time),
+                server_nonce = int(sharping_time.replace(" ", "").replace("-", "").replace(":", "")),
                 index_price = index_price,
                 short_ema = short_ema,
                 long_ema = long_ema,
@@ -45,7 +45,6 @@ class Liquid6tema16dema(Base):
             )
         )
         session.commit()
-
 
 def main(args):
     Base.metadata.create_all(bind = ENGINE)
